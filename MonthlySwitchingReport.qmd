@@ -1,0 +1,66 @@
+---
+title: "Switching Tracking Study"
+format: html
+editor: visual
+format: 
+  html:
+    toc: false
+    toc-depth: 3
+    toc-title: Report Sections
+    number-sections: true
+    theme: cosmo
+    fontsize: 0.9em
+    mainfont: Arial
+    page-layout: full
+---
+
+
+```{r}
+#| label: Load Packages
+#| include: false
+library(tidyverse)
+library(systemfonts)
+library(lubridate)
+library(scales)
+
+```
+
+
+```{r}
+#| label: Load Dataset
+#| include: false
+
+rawSwitchingData <- read_csv("Switching.csv")
+
+
+```
+
+
+```{r}
+#| label: Create cleaned and expanded Dataset
+#| include: false
+
+# Remove test data line
+switchingData <- rawSwitchingData %>%
+  filter(Participant !=1)
+
+# Add Dates, month, year and report period fields
+
+switchingData <- switchingData %>%
+  mutate(responseDateTime = dmy_hm(End), responseMonth = month(responseDateTime), responseYear = year(responseDateTime)) %>%
+  unite("reportPeriod", c(responseYear,responseMonth),sep = "-") %>%
+  mutate(responseMonth = month(responseDateTime), responseYear = year(responseDateTime)) %>%
+  mutate(responseMonth2Digit = case_when(nchar(responseMonth) == 1 ~ str_c(0,responseMonth), nchar(responseMonth) == 2 ~ str_c(responseMonth))) %>%
+  mutate(reportSummaryDate = ymd(str_c(responseYear , responseMonth2Digit ,"01"))) %>%
+  mutate(reportPeriod = fct_reorder(reportPeriod,reportSummaryDate))
+
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
