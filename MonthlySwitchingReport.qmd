@@ -1,7 +1,6 @@
 ---
 title: "Switching Tracking Study"
-format: html
-editor: visual
+echo: false
 format: 
   html:
     toc: false
@@ -12,6 +11,7 @@ format:
     fontsize: 0.9em
     mainfont: Arial
     page-layout: full
+    df-print: paged
 ---
 
 
@@ -27,11 +27,11 @@ library(scales)
 
 
 ```{r}
-#| label: Load Dataset
+#| label: Load Dataset and Set Reporting Attributes
 #| include: false
 
 rawSwitchingData <- read_csv("Switching.csv")
-
+reportMonth <- '2023-1'
 
 ```
 
@@ -74,7 +74,8 @@ switchingData <- switchingData %>%
                                     Q1 == 4 ~"I regularly shop with Gopuff, and ordered about the same in the last month when compared to previous months.",
                                     Q1 == 5 ~"I regularly shop with Gopuff, but ordered less than usual in the last month. ",
                                     Q1 == 6 ~"I did not purchase from Gopuff last month.",
-                                    Q1 == 7 ~"I don’t recall how much I spent with Gopuff last month."))
+                                    Q1 == 7 ~"I don’t recall how much I spent with Gopuff last month."))  %>%
+  mutate(loyaltyChange = fct_reorder(loyaltyChange, Q1))
 
 # Switching to Gopuff -> where did you shop less
 
@@ -270,11 +271,63 @@ switchingData <- switchingData %>%
 
 ```
 
-You can add options to executable code like this
+
+# SWITCHING DATA
+
+Include data like:
+- How many customers did we start the month with on the database
+- How many customers did we end the month with on the database
+- Showing the net movement.
+
+- Then say how many new customers, reactivated, increased loyalty etc etc
+- Could also include some profiling of key attributes as well
+- But mainly data from the loyalty dash
+- And could possibly link off to that in the report.
+
 
 ```{r}
-#| echo: false
-2 * 2
+#| label: Number Responses
+
+# Count how many responses.
+
+completedResponses <-switchingData %>%
+  filter(reportPeriod == reportMonth) %>%
+  summarise(n=n())
+
+completedResponsesValue <- completedResponses[[1]]
+
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+# RESEARCH RESPONSES
+
+In the latest month of data collection we had `r completedResponsesValue` completed responses.
+
+The share of customer self-evaluated changing loyalty levels in the latest month are as follows:
+
+```{r}
+#| label: Loyalty Change
+
+switchingData %>%
+  filter(reportPeriod == reportMonth) %>%
+  group_by(loyaltyChange) %>%
+  summarise(n=n()) %>%
+  mutate(freq = round(n/sum(n),3)) %>%
+  mutate(perc = percent(freq,accuracy = 0.1)) %>%
+  select(-freq)
+
+```
+
+
+## CUSTOMERS INCREASING THEIR LOYALTY TO GOPUFF
+
+### Awareness
+
+For customers that made their first transaction with Gopuff in the last month, where did they originially hear about Gopuff?
+
+
+
+In the latest month of data collection we had `r completedResponsesValue` completed responses.
+<br>
+<br>
+
+
