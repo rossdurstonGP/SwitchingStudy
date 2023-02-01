@@ -1,0 +1,47 @@
+---
+title: "Survey Prize Winner"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: Load Packages
+#| include: false
+library(tidyverse)
+library(systemfonts)
+library(lubridate)
+library(scales)
+
+```
+
+```{r}
+#| label: Load Dataset and Set Reporting Attributes
+#| include: false
+
+rawSwitchingData <- read_csv("Switching.csv")
+reportMonth <- '2023-1'
+
+# Remove test data line
+switchingData <- rawSwitchingData %>%
+  filter(Participant !=1)
+
+switchingData <- switchingData %>%
+  mutate(responseDateTime = dmy_hm(End), responseMonth = month(responseDateTime), responseYear = year(responseDateTime)) %>%
+  unite("reportPeriod", c(responseYear,responseMonth),sep = "-") %>%
+  mutate(responseMonth = month(responseDateTime), responseYear = year(responseDateTime)) %>%
+  mutate(responseMonth2Digit = case_when(nchar(responseMonth) == 1 ~ str_c(0,responseMonth), nchar(responseMonth) == 2 ~ str_c(responseMonth))) %>%
+  mutate(reportSummaryDate = ymd(str_c(responseYear , responseMonth2Digit ,"01"))) %>%
+  mutate(reportPeriod = fct_reorder(reportPeriod,reportSummaryDate))
+
+```
+
+```{r}
+# label: Choose Prize Winner
+
+switchingData %>%
+  filter(reportPeriod==reportMonth, Q22!='') %>%
+  select (User_ID, responseDateTime, Loyalty_Status, Q22) %>%
+    sample_n(1)
+
+```
+
