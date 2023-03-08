@@ -508,7 +508,7 @@ completedResponsesValue <- completedResponses[[1]]
 
 In the latest month of data collection we had `r completedResponsesValue` completed responses.
 
-The share of customer self-evaluated changing loyalty levels in the latest month are as follows:
+The share of customer "self-evaluated changing loyalty levels" in the latest month are as follows:
 
 ```{r}
 #| label: Loyalty Change
@@ -518,7 +518,7 @@ switchingData %>%
   group_by(loyaltyChange) %>%
   summarise(n=n()) %>%
   mutate(freq = round(n/sum(n),3)) %>%
-  mutate(perc = percent(freq,accuracy = 0.1)) %>%
+  mutate(perc = percent(freq,accuracy = 1)) %>%
   select(-freq)
 
 ```
@@ -603,7 +603,7 @@ dataAwarenessTable %>%
   select(-x) %>%
   arrange(desc(n)) %>%
   mutate(freq = round(n/total,3)) %>%
-  mutate(perc = percent(freq, accuracy = 0.1)) %>%
+  mutate(perc = percent(freq, accuracy = 1)) %>%
   select(-freq, - total)
 ```
 
@@ -628,17 +628,18 @@ For customers increasing in loyalty (New to Gopuff, Recently Reactivated or Incr
 
 ```{r}
 #| label: Shop Less Trended
+#| message: false 
 
 switchingData %>%
   filter(Q1 %in% c(1,2,3)) %>%
   group_by(reportPeriod, shopLess) %>%
   summarise(n=n()) %>%
   mutate(freq = round(n/sum(n),3)) %>%
-  mutate(perc = percent(freq,accuracy = 0.1)) %>%
-  select(-freq) %>%
-  arrange(shopLess) %>%
-  select(reportPeriod, shopLess, perc) %>%
-  spread(reportPeriod, perc)
+  select(reportPeriod, shopLess, freq) %>%
+  spread(reportPeriod, freq) %>%
+  arrange(desc(.[ncol(.)])) %>%
+  mutate(across(where(is.numeric),function(x) percent(x,accuracy = 1)))
+
 
 ```
 
@@ -998,13 +999,15 @@ For customers decreasing in loyalty (Decreasing their Spend vs the Previous Mont
 #| label: Shop More Retailers
 
 switchingData %>%
-  filter(reportPeriod == reportMonth, Q1 %in% c(5,6)) %>%
-  group_by(shopMore) %>%
+  filter(Q1 %in% c(5,6)) %>%
+  group_by(reportPeriod, shopMore) %>%
   summarise(n=n()) %>%
   mutate(freq = round(n/sum(n),3)) %>%
-  mutate(perc = percent(freq,accuracy = 0.1)) %>%
-  select(-freq) %>%
-  arrange(desc(n))
+  select(reportPeriod, shopMore, freq) %>%
+  spread(reportPeriod, freq) %>%
+   arrange(desc(.[ncol(.)])) %>%
+  mutate(across(where(is.numeric),function(x) percent(x,accuracy = 1)))
+  
 
 ```
 <br>
@@ -1052,277 +1055,265 @@ And when we asked customers to pick from a list (with the option of picking mult
 ```{r}
 #| label: Shop Less with Gopuff - Quantified Reasons
 
+
 sl1 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.1 == 1) %>%
-  group_by(Q14.1) %>% summarise(n=n()) %>% mutate(Response = "Gopuff’s product prices were more expensive")%>%
-  select(Response, n)
+  filter(Q14.1 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff’s product prices were more expensive")%>%
+  select(reportPeriod, Response, n)
 
 sl2 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.2 == 1) %>%
-  group_by(Q14.2) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had weaker product discounts")%>%
-  select(Response, n)
+  filter(Q14.2 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had weaker product discounts")%>%
+  select(reportPeriod, Response, n)
+
 
 sl3 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.3 == 1) %>%
-  group_by(Q14.3) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had weaker money off coupons")%>%
-  select(Response, n)
+  filter( Q14.3 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had weaker money off coupons")%>%
+  select(reportPeriod, Response, n)
+
 
 sl4 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.4 == 1) %>%
-  group_by(Q14.4) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had a weaker range of products to choose from")%>%
-  select(Response, n)
+  filter( Q14.4 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had a weaker range of products to choose from")%>%
+  select(reportPeriod, Response, n)
+
 
 sl5 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.5 == 1) %>%
-  group_by(Q14.5) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had weaker in-stock product availability")%>%
-  select(Response, n)
+  filter(Q14.5 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had weaker in-stock product availability")%>%
+  select(reportPeriod, Response, n)
+
 
 sl6 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.6 == 1) %>%
-  group_by(Q14.6) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had higher fees, such as delivery fees")%>%
-  select(Response, n)
+  filter( Q14.6 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had higher fees, such as delivery fees")%>%
+  select(reportPeriod, Response, n)
+
 
 sl7 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.7 == 1) %>%
-  group_by(Q14.7) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had a weaker loyalty scheme with Puff Points")%>%
-  select(Response, n)
+  filter( Q14.7 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had a weaker loyalty scheme with Puff Points")%>%
+  select(reportPeriod, Response, n)
+
 
 sl8 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.8 == 1) %>%
-  group_by(Q14.8) %>% summarise(n=n()) %>% mutate(Response = "Gopuff’s Fam Subscription Service wasn’t offering me value for money")%>%
-  select(Response, n)
+  filter(Q14.8 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff’s Fam Subscription Service wasn’t offering me value for money")%>%
+  select(reportPeriod, Response, n)
+
 
 sl9 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.9 == 1) %>%
-  group_by(Q14.9) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had worse delivery drivers")%>%
-  select(Response, n)
+  filter(Q14.9 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had worse delivery drivers")%>%
+  select(reportPeriod, Response, n)
+
 
 sl10 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.10 == 1) %>%
-  group_by(Q14.10) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had an inferior app")%>%
-  select(Response, n)
+  filter(Q14.10 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had an inferior app")%>%
+  select(reportPeriod, Response, n)
+
 
 sl11 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.11 == 1) %>%
-  group_by(Q14.11) %>% summarise(n=n()) %>% mutate(Response = "Gopuff offered slower delivery")%>%
-  select(Response, n)
+  filter( Q14.11 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff offered slower delivery")%>%
+  select(reportPeriod, Response, n)
+
 
 sl12 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.12 == 1) %>%
-  group_by(Q14.12) %>% summarise(n=n()) %>% mutate(Response = "I temporarily / permanently moved out of a Gopuff Delivery Zone")%>%
-  select(Response, n)
+  filter( Q14.12 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "I temporarily / permanently moved out of a Gopuff Delivery Zone")%>%
+  select(reportPeriod, Response, n)
+
 
 sl13 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.13 == 1) %>%
-  group_by(Q14.13) %>% summarise(n=n()) %>% mutate(Response = "Other")%>%
-  select(Response, n)
+  filter( Q14.13 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Other")%>%
+  select(reportPeriod, Response, n)
+
 
 totalSwitchingLessResponses <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q1 %in% c(5,6)) %>%
+  filter(Q1 %in% c(5,6)) %>%
+  group_by(reportPeriod) %>%
   summarise(total=n())
 
 dataSwitchingLessReasonsTable <- rbind(sl1, sl2, sl3, sl4, sl5, sl6, sl7, sl8, sl9, sl10, sl11, sl12, sl13) 
 
-# Create fake column to allow to cross join
-totalSwitchingLessResponses$x <- 1
-dataSwitchingLessReasonsTable$x <- 1
 
 dataSwitchingLessReasonsTable %>%
-  full_join(totalSwitchingLessResponses, by = "x") %>%
-  select(-x) %>%
+  inner_join(totalSwitchingLessResponses, by = "reportPeriod") %>%
   arrange(desc(n)) %>%
   mutate(freq = round(n/total,3)) %>%
-  mutate(perc = percent(freq, accuracy = 0.1)) %>%
-  select(-freq, - total)
+  #mutate(perc = percent(freq, accuracy = 0.1)) %>%
+  select(- total, -n) %>%
+   spread(reportPeriod, freq) %>%
+  arrange(desc(.[ncol(.)])) %>%
+  mutate(across(where(is.numeric),function(x) percent(x,accuracy = 1)))
+
+
+
+
 ```
 
 
-And just filtered to customers who switched to Getir, Gorillas and Zapp:
+And just filtered to customers who switched to Getir, Gorillas, Zapp and Tesco Whoosh (Note, very small sample sizes):
 
 ```{r}
 #| label: Shop Less with Gopuff - Quantified Reasons - Just qcomm
 
+
+
 sl1 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.1 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.1) %>% summarise(n=n()) %>% mutate(Response = "Gopuff’s product prices were more expensive")%>%
-  select(Response, n)
+  filter(Q14.1 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff’s product prices were more expensive")%>%
+  select(reportPeriod, Response, n)
 
 sl2 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.2 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.2) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had weaker product discounts")%>%
-  select(Response, n)
+  filter(Q14.2 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had weaker product discounts")%>%
+  select(reportPeriod, Response, n)
+
 
 sl3 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.3 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.3) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had weaker money off coupons")%>%
-  select(Response, n)
+  filter( Q14.3 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had weaker money off coupons")%>%
+  select(reportPeriod, Response, n)
+
 
 sl4 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.4 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.4) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had a weaker range of products to choose from")%>%
-  select(Response, n)
+  filter( Q14.4 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had a weaker range of products to choose from")%>%
+  select(reportPeriod, Response, n)
+
 
 sl5 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.5 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.5) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had weaker in-stock product availability")%>%
-  select(Response, n)
+  filter(Q14.5 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had weaker in-stock product availability")%>%
+  select(reportPeriod, Response, n)
+
 
 sl6 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.6 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.6) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had higher fees, such as delivery fees")%>%
-  select(Response, n)
+  filter( Q14.6 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had higher fees, such as delivery fees")%>%
+  select(reportPeriod, Response, n)
+
 
 sl7 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.7 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.7) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had a weaker loyalty scheme with Puff Points")%>%
-  select(Response, n)
+  filter( Q14.7 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had a weaker loyalty scheme with Puff Points")%>%
+  select(reportPeriod, Response, n)
+
 
 sl8 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.8 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.8) %>% summarise(n=n()) %>% mutate(Response = "Gopuff’s Fam Subscription Service wasn’t offering me value for money")%>%
-  select(Response, n)
+  filter(Q14.8 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff’s Fam Subscription Service wasn’t offering me value for money")%>%
+  select(reportPeriod, Response, n)
+
 
 sl9 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.9 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.9) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had worse delivery drivers")%>%
-  select(Response, n)
+  filter(Q14.9 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had worse delivery drivers")%>%
+  select(reportPeriod, Response, n)
+
 
 sl10 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.10 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.10) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had an inferior app")%>%
-  select(Response, n)
+  filter(Q14.10 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff had an inferior app")%>%
+  select(reportPeriod, Response, n)
+
 
 sl11 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.11 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.11) %>% summarise(n=n()) %>% mutate(Response = "Gopuff offered slower delivery")%>%
-  select(Response, n)
+  filter( Q14.11 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Gopuff offered slower delivery")%>%
+  select(reportPeriod, Response, n)
+
 
 sl12 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.12 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.12) %>% summarise(n=n()) %>% mutate(Response = "I temporarily / permanently moved out of a Gopuff Delivery Zone")%>%
-  select(Response, n)
+  filter( Q14.12 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "I temporarily / permanently moved out of a Gopuff Delivery Zone")%>%
+  select(reportPeriod, Response, n)
+
 
 sl13 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q14.13 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q14.13) %>% summarise(n=n()) %>% mutate(Response = "Other")%>%
-  select(Response, n)
+  filter( Q14.13 == 1, Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Other")%>%
+  select(reportPeriod, Response, n)
+
 
 totalSwitchingLessResponses <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q1 %in% c(5,6), Q11 %in% c(4,5,17)) %>%
+  filter(Q1 %in% c(5,6), Q11 %in% c(4,5,17,22)) %>%
+  group_by(reportPeriod) %>%
   summarise(total=n())
 
 dataSwitchingLessReasonsTable <- rbind(sl1, sl2, sl3, sl4, sl5, sl6, sl7, sl8, sl9, sl10, sl11, sl12, sl13) 
 
-# Create fake column to allow to cross join
-totalSwitchingLessResponses$x <- 1
-dataSwitchingLessReasonsTable$x <- 1
 
 dataSwitchingLessReasonsTable %>%
-  full_join(totalSwitchingLessResponses, by = "x") %>%
-  select(-x) %>%
+  inner_join(totalSwitchingLessResponses, by = "reportPeriod") %>%
   arrange(desc(n)) %>%
   mutate(freq = round(n/total,3)) %>%
-  mutate(perc = percent(freq, accuracy = 0.1)) %>%
-  select(-freq, - total)
+  #mutate(perc = percent(freq, accuracy = 0.1)) %>%
+  select(- total, -n) %>%
+   spread(reportPeriod, freq) %>%
+  arrange(desc(.[ncol(.)])) %>%
+  mutate(across(where(is.numeric),function(x) percent(x,accuracy = 1)))
+
+
+
 ```
 
-### Which orders did they reduce with Gopuff in the last month:
+### Which orders did customers reduce with Gopuff in the last month:
 
 ```{r}
 #| label: Shop Less with Gopuff - Which orders
 
 slo1 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q16.1 == 1) %>%
-  group_by(Q16.1) %>% summarise(n=n()) %>% mutate(Response = "Day to Day Grocery Orders")%>%
-  select(Response, n)
+  filter( Q16.1 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Day to Day Grocery Orders")%>%
+  select(reportPeriod,Response, n)
 
 slo2 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q16.2 == 1) %>%
-  group_by(Q16.2) %>% summarise(n=n()) %>% mutate(Response = "Drinks Orders")%>%
-  select(Response, n)
+  filter( Q16.2 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Drinks Orders")%>%
+  select(reportPeriod,Response, n)
 
 slo3 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q16.3 == 1) %>%
-  group_by(Q16.3) %>% summarise(n=n()) %>% mutate(Response = "Snacks Orders")%>%
-  select(Response, n)
+  filter( Q16.3 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Snacks Orders")%>%
+  select(reportPeriod,Response, n)
 
 slo4 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q16.4 == 1) %>%
-  group_by(Q16.4) %>% summarise(n=n()) %>% mutate(Response = "Smoking Orders")%>%
-  select(Response, n)
+  filter( Q16.4 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Smoking Orders")%>%
+  select(reportPeriod,Response, n)
 
 slo5 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q16.5 == 1) %>%
-  group_by(Q16.5) %>% summarise(n=n()) %>% mutate(Response = "Urgent Needs Orders")%>%
-  select(Response, n)
+  filter( Q16.5 == 1) %>%
+  group_by(reportPeriod) %>% summarise(n=n()) %>% mutate(Response = "Urgent Needs Orders")%>%
+  select(reportPeriod,Response, n)
 
 totalSwitchingLessResponses <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q1 %in% c(5,6)) %>%
+  filter( Q1 %in% c(5,6)) %>%
+  group_by(reportPeriod) %>%
   summarise(total=n())
 
 dataSwitchingLessOrderTypeTable <- rbind(slo1, slo2, slo3, slo4, slo5) 
 
-# Create fake column to allow to cross join
-totalSwitchingLessResponses$x <- 1
-dataSwitchingLessOrderTypeTable$x <- 1
+
 
 dataSwitchingLessOrderTypeTable %>%
-  full_join(totalSwitchingLessResponses, by = "x") %>%
-  select(-x) %>%
-  arrange(desc(n)) %>%
+  inner_join(totalSwitchingLessResponses, by = "reportPeriod") %>%
+ arrange(desc(n)) %>%
   mutate(freq = round(n/total,3)) %>%
-  mutate(perc = percent(freq, accuracy = 0.1)) %>%
-  select(-freq, - total)
+  select(-total,-n) %>%
+  spread(reportPeriod, freq) %>%
+  arrange(desc(.[ncol(.)])) %>%
+  mutate(across(where(is.numeric),function(x) percent(x,accuracy = 1)))
+
 ```
 
-And just filtered to customers who switched to Getir, Gorillas and Zapp:
 
-```{r}
-#| label: Shop Less with Gopuff - Which orders - just qcomm
-
-slo1 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q16.1 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q16.1) %>% summarise(n=n()) %>% mutate(Response = "Day to Day Grocery Orders")%>%
-  select(Response, n)
-
-slo2 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q16.2 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q16.2) %>% summarise(n=n()) %>% mutate(Response = "Drinks Orders")%>%
-  select(Response, n)
-
-slo3 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q16.3 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q16.3) %>% summarise(n=n()) %>% mutate(Response = "Snacks Orders")%>%
-  select(Response, n)
-
-slo4 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q16.4 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q16.4) %>% summarise(n=n()) %>% mutate(Response = "Smoking Orders")%>%
-  select(Response, n)
-
-slo5 <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q16.5 == 1, Q11 %in% c(4,5,17)) %>%
-  group_by(Q16.5) %>% summarise(n=n()) %>% mutate(Response = "Urgent Needs Orders")%>%
-  select(Response, n)
-
-totalSwitchingLessResponses <- switchingData %>%
-  filter(reportPeriod == reportMonth, Q1 %in% c(5,6), Q11 %in% c(4,5,17)) %>%
-  summarise(total=n())
-
-dataSwitchingLessOrderTypeTable <- rbind(slo1, slo2, slo3, slo4, slo5) 
-
-# Create fake column to allow to cross join
-totalSwitchingLessResponses$x <- 1
-dataSwitchingLessOrderTypeTable$x <- 1
-
-dataSwitchingLessOrderTypeTable %>%
-  full_join(totalSwitchingLessResponses, by = "x") %>%
-  select(-x) %>%
-  arrange(desc(n)) %>%
-  mutate(freq = round(n/total,3)) %>%
-  mutate(perc = percent(freq, accuracy = 0.1)) %>%
-  select(-freq, - total)
-```
 
 ### Why are customers not placing Day to Day Grocery Orders?
 
